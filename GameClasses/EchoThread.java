@@ -48,21 +48,6 @@ public class EchoThread extends Thread
             try 
             {
             	fromClient = brinp.readLine();
-            	/**
-            	if ((fromClient == null) || fromClient.equalsIgnoreCase("QUIT")) 
-                {
-                    socket.close();
-                    return;
-                }
-                else 
-                {
-                	queue.put(fromClient + "\n\r");
-                    
-                	//out.writeBytes(line + "\n\r");
-                    //out.flush();
-                }
-                **/
-                
                 
                 if (fromClient.toLowerCase().contains("poll"))
                 {
