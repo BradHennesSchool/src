@@ -1,18 +1,17 @@
 package GameClasses;
 
-import java.awt.Component;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
+import javax.swing.*;
+import java.awt.*;
 
 public class GameClassesAndFunctions 
 {
+	//converts a list of cards to a list of filenames
 	public static String[] CardsToFilenames(String[] cards)
 	{
-		String[] filenames = new String[18];
+		String[] filenames = new String[17];
 		
 		for(int i = 0; i < 17; ++i)
 		{
@@ -27,17 +26,39 @@ public class GameClassesAndFunctions
 			if(filenames[i].equals("14"))
 				filenames[i] = "A";
 			
-			
 			filenames[i] += cards[i + 1].substring(0, 1) + ".png";
 		
-			
 			System.out.println(cards[i+1] + " to " + filenames[i]);
 		}
 		
 		return filenames;
 	}
 	
+	//converts card to a filename
+	public static String CardToFilename(String card)
+	{
+		String filename = "";
+	
+		filename = card.substring(1);
+		
+		if(filename.equals("11"))
+			filename = "J";
+		if(filename.equals("12"))
+			filename = "Q";
+		if(filename.equals("13"))
+			filename = "K";
+		if(filename.equals("14"))
+			filename = "A";
+		
+		filename += card.substring(0, 1) + ".png";
+	
+		System.out.println(card + " to " + filename);
+	
+		
+		return filename;
+	}
 
+	//tallies points of a trick
 	public static int TallyPoints(String p1card, String p2card, String p3card)
 	{
 		return
@@ -46,19 +67,19 @@ public class GameClassesAndFunctions
 			Integer.parseInt(p3card.substring(1));
 	}
 	
-
-	static int FindRoundWinner(String p1card, String p2card, String p3card, String SuitLed)
+	//finds the winner of a trick
+	public static int FindRoundWinner(String p1card, String p2card, String p3card, String SuitLed)
 	{
 		int p1 = 0;
 		int p2 = 0;
 		int p3 = 0;
 		
-		if(p1card.substring(0,0) == SuitLed)
-			p1 = Integer.parseInt(p1card.substring(0));
-		if(p1card.substring(0,0) == SuitLed)
-			p2 = Integer.parseInt(p2card.substring(0));	
-		if(p1card.substring(0,0) == SuitLed)
-			p3 = Integer.parseInt(p3card.substring(0));
+		if(p1card.substring(0,1).equalsIgnoreCase(SuitLed))
+			p1 = Integer.parseInt(p1card.substring(1));
+		if(p2card.substring(0,1).equalsIgnoreCase(SuitLed))
+			p2 = Integer.parseInt(p2card.substring(1));	
+		if(p3card.substring(0,1).equalsIgnoreCase(SuitLed))
+			p3 = Integer.parseInt(p3card.substring(1));
 		
 		if(p1 > p2 && p1 > p3)
 			return 1;
@@ -68,7 +89,8 @@ public class GameClassesAndFunctions
 			return 3;
 	}
 	
-	static String ReadFromServer(InputStreamReader in, PrintWriter out) throws IOException
+	//reads from queue
+	public static String ReadFromServer(InputStreamReader in, PrintWriter out) throws IOException
 	{
 		out.println("poll");
 		int ServerEcho;
@@ -79,10 +101,25 @@ public class GameClassesAndFunctions
 	        fromserver += (char)SEtoByte;
 	    }
 		
-		return fromserver;
+		return fromserver.trim();
 	}
 	
-	static String PeekServer(InputStreamReader in, PrintWriter out) throws IOException
+	//clears the queue
+	public static void ClearQueue(InputStreamReader in, PrintWriter out) throws IOException
+	{
+		String fromserver = ReadFromServer(in, out);
+		
+		while(!fromserver.contains("null"))
+		{
+			System.out.println(fromserver);
+			fromserver = ReadFromServer(in, out);
+		}
+		
+		out.println("clear");
+	}
+	
+	//peeks at the queue
+	public static String PeekServer(InputStreamReader in, PrintWriter out) throws IOException
 	{
 		out.println("peek");
 		int ServerEcho;
@@ -93,44 +130,65 @@ public class GameClassesAndFunctions
 	        fromserver += (char)SEtoByte;
 	    }
 		
-		return fromserver;
+		return fromserver.trim();
 	}
 	
-	static void waitForPlayers(InputStreamReader in, PrintWriter out) throws IOException
+	//waits until all players are connected
+	public static void waitForPlayers(InputStreamReader in, PrintWriter out) throws IOException, InterruptedException
 	{
 		String fromserver = "";
 		
 		while(!fromserver.contains("all players connected")) //wait for the all players connected message
 		{
+			int wait = (int)(Math.random() * 100);
+			
+			Thread.sleep(wait);
 			fromserver = PeekServer(in, out);
 		}
 		
-		ReadFromServer(in, out);
+		System.out.println(ReadFromServer(in, out));
 	}
 	
-	static void waitTillNull(InputStreamReader in, PrintWriter out) throws IOException
+	//waits until the queue is empty
+	public static void waitTillNull(InputStreamReader in, PrintWriter out) throws IOException
 	{
 		String fromserver = "";
 		
-		while(fromserver != "null")
-			fromserver = PeekServer(in, out);
+		while(!fromserver.contains("null"))
+			fromserver = PeekServer(in, out).trim();
 	}
 	
-	static String waitForNewCard(InputStreamReader in, PrintWriter out, String[] CardsHave) throws IOException
+	//gets cards from other players, makes sure it doesn't have that card already.
+	public static String waitForNewCard(InputStreamReader in, PrintWriter out, String[] CardsHave, String CardCheck) throws IOException, InterruptedException
 	{
 		String fromserver = "";
 		
 		while(true)
 		{
+			int wait = (int)(Math.random() * 100);
+			Thread.sleep(wait);
+			
 			fromserver = PeekServer(in, out);
+			//System.out.println("Peek :" + fromserver);
 			if(!fromserver.contains("null"))
-				if(CardsHave[Integer.parseInt(fromserver.substring(0, 0))] != "")
-					return ReadFromServer(in, out);
+			{
+				//System.out.println("Peeked at: " + fromserver);
+				if(CardsHave[Integer.parseInt(fromserver.substring(0, 1))].trim() == "")
+				{
+					fromserver = ReadFromServer(in, out).trim();
+					
+					if(!fromserver.contains("null") && !fromserver.contains(CardCheck))
+						return fromserver;
+				}
+			}
 		}
 	}
 	
-	static String getCardPlayed(InputStreamReader in, PrintWriter out) throws IOException
+	//gets card played from other players
+	public static String getCardPlayed(InputStreamReader in, PrintWriter out) throws IOException
 	{
+		System.out.println("getting card from server.");
+		
 		String fromserver = "null";
 		
 		while(fromserver.contains("null"))
@@ -138,10 +196,13 @@ public class GameClassesAndFunctions
 			fromserver = ReadFromServer(in, out);
 		}
 		
-		return fromserver;
+		System.out.println("Recieved: " + fromserver);
+		
+		return fromserver.trim();
 	}
 
-	static String[] GetMyCards(InputStreamReader in, PrintWriter out, int playernumber) throws IOException
+	//gets starting cards from server
+	public static String[] GetMyCards(InputStreamReader in, PrintWriter out, int playernumber) throws IOException
 	{
 		String fromserver = "";
 		
@@ -150,9 +211,8 @@ public class GameClassesAndFunctions
 			fromserver = PeekServer(in, out);
 		}
 		
-		return ReadFromServer(in, out).split(":");
+		return ReadFromServer(in, out).trim().split(":");
 	}
-	
 
 //	
 // Find the winner in the case of a tie based on player points
@@ -233,25 +293,6 @@ public class GameClassesAndFunctions
 		return msg;
 	}
 	
-	
-//
-// Updates a players score label 
-//
-	public static void updateScore(int[]scores, int player, JLabel p1, JLabel p2, JLabel p3) {
-		
-		if (player == 1) {
-			scores[1]++;
-			p1.setText(Integer.toString(scores[1]));
-		} else if (player == 2) {
-			scores[2]++;
-			p2.setText(Integer.toString(scores[2]));
-		} else if (player == 2) {
-			scores[3]++;
-			p3.setText(Integer.toString(scores[3]));
-		}
-	}
-	
-	
 //
 // displays the inputed text
 //
@@ -260,4 +301,5 @@ public class GameClassesAndFunctions
 		Component frame = null;
 		JOptionPane.showMessageDialog(frame, s);
 	}
+	
 }

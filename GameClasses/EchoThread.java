@@ -4,14 +4,11 @@ import java.net.*;
 import java.util.concurrent.BlockingQueue;
 import java.io.*;
 
-
-
 public class EchoThread extends Thread 
 {
     protected Socket socket;
 
     BlockingQueue<String> queue; 
-    
     
     public EchoThread(Socket clientSocket) 
     {
@@ -48,7 +45,7 @@ public class EchoThread extends Thread
             try 
             {
             	fromClient = brinp.readLine();
-                
+                //System.out.println("FromClient:" + fromClient);
                 if (fromClient.toLowerCase().contains("poll"))
                 {
                 	fromServer = queue.poll();
@@ -57,9 +54,11 @@ public class EchoThread extends Thread
 	                	//read message from queue and send to client
 	                	out.writeBytes(fromServer + "\n\r");
 	                	out.flush();
+	                	System.out.println("polled from Queue: " + fromServer + "\n\r");
 	                }
 	                else
 	                {
+	                	System.out.println("polled from Queue: null");
 	                	out.writeBytes("null" + "\n\r");
 	                }
                 }
@@ -77,12 +76,21 @@ public class EchoThread extends Thread
 	                	out.writeBytes("null" + "\n\r");
 	                }
                 }                
+                else if (fromClient.toLowerCase().contains("clear"))
+                {
+                	queue.clear();
+                	if(queue.isEmpty())
+                		System.out.println("The queue is not the issue");
+                	else
+                		System.out.println("Queue is problem");
+                }
                 else
                 {
                 	//put client message on the queue
                 	queue.put(fromClient);
                 	queue.put(fromClient);
                 	
+                	System.out.println("Put in Queue: " + fromClient + "\n\r");
                 	out.writeBytes(fromClient + "\n\r");
                 	out.flush();
                 }

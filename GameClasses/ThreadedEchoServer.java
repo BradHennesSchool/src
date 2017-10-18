@@ -11,8 +11,7 @@ public class ThreadedEchoServer
 {
 
     static final int PORT = 5557;
-
-
+    
     static final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
     
     @SuppressWarnings("resource")
@@ -45,6 +44,7 @@ public class ThreadedEchoServer
 		}
 		queue.add(hand);
         
+		System.out.println("ready for connections");
         try 
         {
             serverSocket = new ServerSocket(PORT);
@@ -70,6 +70,8 @@ public class ThreadedEchoServer
             NewThread.start();
         }
     }
+    
+    
     static String[] GetShuffledDeck()
 	{
 		String[] cardtypes = new String[4];
